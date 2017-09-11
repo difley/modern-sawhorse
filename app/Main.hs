@@ -40,8 +40,10 @@ main = do
   print $ groupTupleList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
   print $ fmap unzip (groupTupleList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)])
   print $ mapFromPairList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
+  print $ Array $ fromList $ fmap (Object . fromList) [[("a", "4"), ("b", "wow")], [("b", "ew"), ("a", "3")]]
   -- print $ mapFromPairList [("a", Number 3),("a", Number 4),("b", Number 5),("a", Number 6),("a", Number 3),("a", Number 5),("a", Number 5)]
   testIn "temple"
+  print $ mapFromPairList  $ getValuePairs  [[("a", "4"), ("b", "wow")], [("b", "ew"), ("a", "3")], [("a", "4"), ("b", "coonhound")]]
 
 
 revStrings :: Value -> Value
@@ -108,8 +110,9 @@ getFirstValue key myPairs = CM.join $ DL.find (/= Nothing) $ fmap (getaValue key
 getFirstValuePair :: (Eq a, Eq b, IsString a, IsString b) => [(a, b)] -> (Maybe b, Maybe b)
 getFirstValuePair myPairs = (getFirstValue "a" myPairs, getFirstValue "b" myPairs)
 
-getValuePairs :: (Eq a, Eq b, IsString a, IsString b) => [[(a, b)]] -> [(Maybe b, Maybe b)]
-getValuePairs myPairs = filter (\a -> (fst a /= Nothing) && (snd a /= Nothing)) $ fmap getFirstValuePair myPairs
+getValuePairs :: (Eq a, Eq b, IsString a, IsString b) => [[(a, b)]] -> [(b, b)]
+getValuePairs myPairs = fmap (\a -> (maybe "" id (fst a), maybe "" id (snd a))) $ filter (\a -> (fst a /= Nothing) && (snd a /= Nothing)) $ fmap getFirstValuePair myPairs
+
 -- ifAgetBPair :: IsString a => [(a, b)] -> Maybe (b, b)
 -- ifAgetBPair myList 
 
