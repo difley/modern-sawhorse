@@ -3,6 +3,7 @@
 module Main where
 
 import Data.Aeson
+import Control.Monad as CM (join)
 import Data.Aeson.Types
 import Control.Monad.Catch
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -39,6 +40,7 @@ main = do
   print $ groupTupleList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
   print $ fmap unzip (groupTupleList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)])
   print $ mapFromPairList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
+  -- print $ mapFromPairList [("a", Number 3),("a", Number 4),("b", Number 5),("a", Number 6),("a", Number 3),("a", Number 5),("a", Number 5)]
   testIn "temple"
 
 
@@ -59,10 +61,12 @@ groupbyb (Object x) = let myPair (k, v) = (k, String "yes")
 groupbyb other     = other
 
 
+-- mapToValue :: (Eq a, Eq b, Ord a) => [(a, [String b])] -> Value
+-- mapToValue myList = Object (fromList myList)
 
 
 getbvalue :: Value -> Parser String
-getbvalue (Object x) = x .: "a" 
+getbvalue (Object x) = x .: "a"
 -- getbvalue (Object x) = DM.lookup "a" (fromList [("a", x)])
 -- getbvalue (Object x) = Object . fromList . (DM.lookup "a" (fromList [("a", 3)]))
 
@@ -88,6 +92,26 @@ groupTupleList myList = DL.groupBy pairKeyMatches $ sortTupleList myList
 
 pairKeyMatches :: (Eq a) => (a, b) -> (a, b) -> Bool
 pairKeyMatches x y = (fst x) == (fst y)
+
+
+-- sortPairs :: [(a, b)] -> [(a, b)]
+-- sortPairs myPairs = DL.sortBy (\a b -> compare) myPairs
+
+getaValue :: (Eq a) => a -> (a, b) -> Maybe b
+getaValue key myPair 
+          | (fst myPair) == key = Just (snd myPair)
+          | otherwise = Nothing
+
+getFirstValue :: (Eq a, Eq b) => a -> [(a, b)] -> Maybe b
+getFirstValue key myPairs = CM.join $ DL.find (/= Nothing) $ fmap (getaValue key) myPairs
+
+getFirstValuePair :: (Eq a, Eq b, IsString a, IsString b) => [(a, b)] -> (Maybe b, Maybe b)
+getFirstValuePair myPairs = (getFirstValue "a" myPairs, getFirstValue "b" myPairs)
+
+getValuePairs :: (Eq a, Eq b, IsString a, IsString b) => [[(a, b)]] -> [(Maybe b, Maybe b)]
+getValuePairs myPairs = filter (\a -> (fst a /= Nothing) && (snd a /= Nothing)) $ fmap getFirstValuePair myPairs
+-- ifAgetBPair :: IsString a => [(a, b)] -> Maybe (b, b)
+-- ifAgetBPair myList 
 
 parseArray :: Value -> Parser [(String, Bool)]
 parseArray = withArray "array of tuples" $ \arr ->
