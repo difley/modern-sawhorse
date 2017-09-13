@@ -18,6 +18,7 @@ import qualified Data.Text as T
 import qualified Data.List as DL
 import qualified Data.Vector as V
 import qualified Data.ByteString.Lazy as BSL
+import Data.Hashable (Hashable)
 import Data.Maybe (isJust, fromMaybe)
 
 main :: IO ()
@@ -48,10 +49,10 @@ main = do
   print $ groupList [("a", 3),("a", 4),("a", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
   print $ groupTupleList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
   print $ fmap unzip (groupTupleList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)])
-  print $ mapFromPairList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
+  -- print $ mapFromPairList [("a", 3),("a", 4),("b", 5),("a", 6),("a", 3),("a", 5),("a", 5)]
   writeJSONFileLazy "handrwritten.json" $ Array $ fromList $ fmap (Object . fromList) [[("a", "4"), ("b", "wow")], [("b", "ew"), ("a", "3")]]
   -- print $ mapFromPairList [("a", Number 3),("a", Number 4),("b", Number 5),("a", Number 6),("a", Number 3),("a", Number 5),("a", Number 5)]
-  print $ mapFromPairList  $ getValuePairs  [[("a", "4"), ("b", "wow")], [("b", "ew"), ("a", "3")], [("a", "4"), ("b", "coonhound")]]
+  -- print $ mapFromPairList  $ getValuePairs  [[("a", "4"), ("b", "wow")], [("b", "ew"), ("a", "3")], [("a", "4"), ("b", "coonhound")]]
   print $ Object $ fromList [("a", "4"), ("b", "wow")]
   -- print $ fmap HM.toList $ Object $ fromList [("a", "4"), ("b", "wow")]
 
@@ -101,9 +102,13 @@ getbvalue (Object x) = x .: "a"
 -- getbvalue (Object x) = DM.lookup "a" (fromList [("a", x)])
 -- getbvalue (Object x) = Object . fromList . (DM.lookup "a" (fromList [("a", 3)]))
 
-mapFromPairList :: (Eq a, Eq b, Ord a) => [(a, b)] -> [(a, [b])]
+mapFromPairList :: (Eq b, IsString a, Ord a, Hashable a) => [(a, b)] -> HM.HashMap a [b]
 mapFromPairList myList = let unzippedGroups = fmap unzip (groupTupleList myList)
-                         in fmap (\group -> (head (fst group), snd group)) unzippedGroups
+                         in HM.fromList $ fmap (\group -> (head (fst group), snd group)) unzippedGroups
+
+-- mapFromPairList :: (Eq a, Eq b, Ord a) => [(a, b)] -> [(a, [b])]
+-- mapFromPairList myList = let unzippedGroups = fmap unzip (groupTupleList myList)
+--                          in fmap (\group -> (head (fst group), snd group)) unzippedGroups
 
 
 groupList :: Ord a => [a] -> [[a]]
