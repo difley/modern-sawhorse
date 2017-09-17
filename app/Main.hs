@@ -2,30 +2,25 @@
 
 module Main where
 
-import Data.Aeson
+import Data.Aeson (toJSON, eitherDecodeStrict, encode, withObject, withArray)
 import Control.Monad as CM (join)
-import Data.Aeson.Types
-import Control.Monad.Catch
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Aeson.Types (Value (String), Parser, parseMaybe, (.:))
+import Control.Monad.Catch (throwM)
 import Data.ByteString (ByteString)
 import GHC.Exts (fromList, IsString)
-import qualified Data.Map as DM
-import qualified Data.HashMap.Strict as HM
-import qualified Data.ByteString as B
-import qualified Data.Text.Lazy.Encoding as T
-import qualified Data.Text.Lazy.IO as T
-import qualified Data.Text as T
-import qualified Data.List as DL
-import qualified Data.Vector as V
-import qualified Data.ByteString.Lazy as BSL
+import qualified Data.HashMap.Strict as HM (HashMap, fromList)
+import qualified Data.ByteString as B (readFile)
+import qualified Data.List as DL (sortBy, groupBy)
+import qualified Data.Vector as V (toList)
+import qualified Data.ByteString.Lazy as BSL (writeFile)
 import Data.Hashable (Hashable)
 import Data.Maybe (isJust, fromMaybe)
 
 main :: IO ()
 main = do
-  u <- readJSONFileStrict "coonhound.json"
+  u <- readJSONFileStrict "example.json"
   print $ mapFromPairList $ fromMaybe [] (parseMaybe parseArray' u)
-  writeJSONFileLazy "coonhound_grouped.json" $ toJSON (mapFromPairList $ fromMaybe [] (parseMaybe parseArray' u))
+  writeJSONFileLazy "example_grouped.json" $ toJSON (mapFromPairList $ fromMaybe [] (parseMaybe parseArray' u))
 
 
 
@@ -54,7 +49,7 @@ parseTuple' = withObject "tuple" $ \o -> do
   return (a, b)
 
 
--- from https://stackoverflow.com/a/41566055/382936
+-- modified from https://stackoverflow.com/a/41566055/382936
 readJSONFileStrict :: FilePath -> IO Value
 readJSONFileStrict fp = do
   bs <- B.readFile fp
